@@ -1,0 +1,35 @@
+name: Create new branch
+on:
+  workflow_dispatch:
+
+jobs:
+  create-new-branch:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Commit changes and create branch
+        run: |
+          git config --local user.name "$GITHUB_ACTOR"
+          git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          
+          # Neuen Branch erstellen
+          BRANCH_NAME="update-citation-$(date +%Y%m%d%H%M%S)"
+          git checkout -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: $BRANCH_NAME
+          base: main
+          title: "Automated update of CITATION.cff"
+          body: "This PR updates the CITATION.cff file with the latest version tag."
+          reviewers: anawas
+
